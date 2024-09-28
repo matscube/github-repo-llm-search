@@ -133,42 +133,45 @@ type License struct {
 	NodeID string `json:"node_id"`
 }
 
-func getGitHubRepositories(db *gorm.DB) {
+func getGitHubRepositories(db *gorm.DB, basePath string) {
 	var allItems []Item
-	page := 11
+	page := 1
 	failed := 0
 	for {
-		fmt.Println("page: ", page)
-		items := getPerPage(page)
-		fmt.Println("count: ", len(items))
+		totalCount, items := getPerPage(page, basePath)
+		fmt.Printf("totalCount: %d page: %d count: %d\n", totalCount, page, len(items))
 		if len(items) == 0 {
 			failed++
 			fmt.Println("failed count: ", failed)
 		}
-		if failed > 100 {
+		if failed > 3 {
 			break
 		}
-		allItems = append(allItems, items...)
-		for _, item := range items {
-			fmt.Printf("Item url: %s star: %d\n", item.HTMLURL, item.StargazersCount)
+		for i, item := range items {
+			fmt.Printf("\t %d Item url: %s star: %d\n", len(allItems)+i+1, item.HTMLURL, item.StargazersCount)
 			db.Clauses(clause.OnConflict{
 				UpdateAll: true,
 			}).Create(&item)
 		}
+		allItems = append(allItems, items...)
 		page++
 		time.Sleep(10 * time.Second) // Wait for 10 seconds before the next page
 	}
 	fmt.Println("Total count: ", len(allItems))
 }
 
-func getPerPage(page int) []Item {
+func getPerPage(page int, basePath string) (int, []Item) {
 	// Perform HTTP GET request
-	starThreshold := 1000
+	// starThreshold := 1000
 	perPage := 100 // max count 100
+	url := fmt.Sprintf("%s&per_page=%d&page=%d", basePath, perPage, page)
+	fmt.Println("url: ", url)
 
 	// rate limit 10 req / min
 	// api doc: https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28
-	url := fmt.Sprintf("https://api.github.com/search/repositories?q=stars:>%d&sort=stars&per_page=%d&page=%d", starThreshold, perPage, page)
+	// https://api.github.com/search/repositories?q=stars:%3E1000&created>2020-07-01&sort=updated
+	// url := fmt.Sprintf("https://api.github.com/search/repositories?q=stars:>%d&sort=stars&per_page=%d&page=%d", starThreshold, perPage, page)
+	// url := fmt.Sprintf("https://api.github.com/search/repositories?q=stars:>%d&sort=stars&per_page=%d&page=%d", starThreshold, perPage, page)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatalf("Error performing GET request: %v", err)
@@ -185,7 +188,7 @@ func getPerPage(page int) []Item {
 	err = json.Unmarshal(responseData, &body)
 	if err != nil {
 		log.Fatalf("Error unmarshalling JSON: %v", err)
-		return nil
+		return 0, nil
 	}
-	return body.Items
+	return body.TotalCount, body.Items
 }
