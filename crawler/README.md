@@ -29,13 +29,14 @@
 > 2000: per 40 + 10
 > 1000: per 10 + 5
 > 500: per 3 + 2
+> 300: per 1 + 1
 
 https://api.github.com/search/repositories?q=stars:>50000&sort=stars => 251
 https://api.github.com/search/repositories?q=stars:30000..60000&sort=stars => 481
 https://api.github.com/search/repositories?q=stars:20000..31000&sort=stars => 772
 https://api.github.com/search/repositories?q=stars:19000..21000&sort=stars
-
-
+https://api.github.com/search/repositories?q=stars:>500 => 95639
+https://api.github.com/search/repositories?q=stars:>300 => 150842
 
 https://api.github.com/search/repositories?q=stars:1000..1002&sort=stars
 
@@ -44,3 +45,11 @@ https://api.github.com/search/repositories?q=stars:1000..1002&sort=stars
 * get base path sliding window
 * loop for base path with paging
   * store items 
+
+
+### backup
+- password: examplepass
+- backup
+pg_dump -h 0.0.0.0 -U exampleuser -d exampledb -F c -b -v -f exampledb.backup
+- restore
+pg_restore -h 0.0.0.0 -U exampleuser -d exampledb -v exampledb.backup

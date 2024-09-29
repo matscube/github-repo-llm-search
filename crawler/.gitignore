@@ -39,3 +39,7 @@ dist/
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# others
+data/
+out/
