@@ -39,7 +39,3 @@ func main() {
 		}
 	}
 }
-
-func getRepoReadme() {
-	fmt.Println("Running getRepoReadme function")
-}

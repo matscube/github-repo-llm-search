@@ -53,3 +53,8 @@ https://api.github.com/search/repositories?q=stars:1000..1002&sort=stars
 pg_dump -h 0.0.0.0 -U exampleuser -d exampledb -F c -b -v -f exampledb.backup
 - restore
 pg_restore -h 0.0.0.0 -U exampleuser -d exampledb -v exampledb.backup
+
+
+
+### todo
+* build dir-nested go files
