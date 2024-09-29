@@ -15,12 +15,12 @@ import (
 )
 
 type GitHubResponse struct {
-	TotalCount        int    `json:"total_count"`
-	IncompleteResults bool   `json:"incomplete_results"`
-	Items             []Item `json:"items"`
+	TotalCount        int          `json:"total_count"`
+	IncompleteResults bool         `json:"incomplete_results"`
+	Items             []Repository `json:"items"`
 }
 
-type Item struct {
+type Repository struct {
 	gorm.Model
 	ID       int    `gorm:"primaryKey" json:"id"`
 	NodeID   string `json:"node_id"`
@@ -105,34 +105,34 @@ type Item struct {
 	Score         float64        `json:"score"`
 }
 
-type Owner struct {
-	Login             string `json:"login"`
-	ID                int    `json:"id"`
-	NodeID            string `json:"node_id"`
-	AvatarURL         string `json:"avatar_url"`
-	GravatarID        string `json:"gravatar_id"`
-	URL               string `json:"url"`
-	HTMLURL           string `json:"html_url"`
-	FollowersURL      string `json:"followers_url"`
-	FollowingURL      string `json:"following_url"`
-	GistsURL          string `json:"gists_url"`
-	StarredURL        string `json:"starred_url"`
-	SubscriptionsURL  string `json:"subscriptions_url"`
-	OrganizationsURL  string `json:"organizations_url"`
-	ReposURL          string `json:"repos_url"`
-	EventsURL         string `json:"events_url"`
-	ReceivedEventsURL string `json:"received_events_url"`
-	Type              string `json:"type"`
-	SiteAdmin         bool   `json:"site_admin"`
-}
+// type Owner struct {
+// 	Login             string `json:"login"`
+// 	ID                int    `json:"id"`
+// 	NodeID            string `json:"node_id"`
+// 	AvatarURL         string `json:"avatar_url"`
+// 	GravatarID        string `json:"gravatar_id"`
+// 	URL               string `json:"url"`
+// 	HTMLURL           string `json:"html_url"`
+// 	FollowersURL      string `json:"followers_url"`
+// 	FollowingURL      string `json:"following_url"`
+// 	GistsURL          string `json:"gists_url"`
+// 	StarredURL        string `json:"starred_url"`
+// 	SubscriptionsURL  string `json:"subscriptions_url"`
+// 	OrganizationsURL  string `json:"organizations_url"`
+// 	ReposURL          string `json:"repos_url"`
+// 	EventsURL         string `json:"events_url"`
+// 	ReceivedEventsURL string `json:"received_events_url"`
+// 	Type              string `json:"type"`
+// 	SiteAdmin         bool   `json:"site_admin"`
+// }
 
-type License struct {
-	Key    string `json:"key"`
-	Name   string `json:"name"`
-	SpdxID string `json:"spdx_id"`
-	URL    string `json:"url"`
-	NodeID string `json:"node_id"`
-}
+// type License struct {
+// 	Key    string `json:"key"`
+// 	Name   string `json:"name"`
+// 	SpdxID string `json:"spdx_id"`
+// 	URL    string `json:"url"`
+// 	NodeID string `json:"node_id"`
+// }
 
 func getStorage() *gorm.DB {
 	// todo: use os.Getenv to get the environment variables
@@ -148,7 +148,7 @@ func getStorage() *gorm.DB {
 	}
 
 	// Auto-migrate the schema
-	err = db.AutoMigrate(&Item{})
+	err = db.AutoMigrate(&Repository{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -186,7 +186,7 @@ func getGitHubRepositories() {
 }
 
 func getGitHubRepository(db *gorm.DB, basePath string) {
-	var allItems []Item
+	var allItems []Repository
 	page := 1
 	failed := 0
 	for {
@@ -212,7 +212,7 @@ func getGitHubRepository(db *gorm.DB, basePath string) {
 	fmt.Println("Total count: ", len(allItems))
 }
 
-func getPerPage(page int, basePath string) (int, []Item) {
+func getPerPage(page int, basePath string) (int, []Repository) {
 	// Perform HTTP GET request
 	// starThreshold := 1000
 	perPage := 100 // max count 100
