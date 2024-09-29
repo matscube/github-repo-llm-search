@@ -11,11 +11,19 @@ import (
 
 type RepositorySummary struct {
 	gorm.Model
-	ID           int        `gorm:"primaryKey"`
-	Name         string     `gorm:"size:255"`
-	FullName     string     `gorm:"size:255"`
-	RepositoryID int        `gorm:"not null; unique"`                      // Foreign key field
-	Repository   Repository `gorm:"foreignKey:RepositoryID;references:ID"` // Foreign key relationship
+	ID              int        `gorm:"primaryKey"`
+	Name            string     `gorm:"size:255"`
+	FullName        string     `gorm:"size:255"`
+	RepositoryID    int        `gorm:"not null; unique"`                      // Foreign key field
+	Repository      Repository `gorm:"foreignKey:RepositoryID;references:ID"` // Foreign key relationship
+	Size            int
+	StargazersCount int
+	DefaultBranch   string
+	OpenIssuesCount int
+	Language        string
+	PushedAt        string
+	ReadMe          string `gorm:"type:text"` // Use text data type for large text
+
 }
 
 type Repository struct {

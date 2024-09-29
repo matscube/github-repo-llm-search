@@ -47,6 +47,16 @@ https://api.github.com/search/repositories?q=stars:1000..1002&sort=stars
   * store items 
 
 
+### rate limit on GitHub API
+https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28
+- unauthenticated users
+  - 60 req / hour
+- authenticated users (not enterprise plan)
+  - 5000 req / hour (~ 1 req / 1s
+- secondary rate limits
+  - no more than 100 concurrent req are allowed
+  - there are various other restrictions as well.
+
 ### backup
 - password: examplepass
 - backup
