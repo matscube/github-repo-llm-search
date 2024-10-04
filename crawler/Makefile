@@ -27,7 +27,8 @@ clean:
 	rm -f $(BINARY)
 
 backup:
-	pg_dump -h localhost -U myuser -d mydatabase -F c -b -v -f mydatabase.backup
+	pg_dump -h localhost -U exampleuser -d exampledb -F c -b -v -f exampledb.backup
+  pg_dump -h localhost -U exampleuser -d exampledb -F p -b -v -f exampledb.sql
 
 restore:
-	pg_restore -h localhost -U myuser -d mydatabase -v mydatabase.backup
+	pg_restore -h localhost -U exampleuser -d exampledb -v exampledb.backup
