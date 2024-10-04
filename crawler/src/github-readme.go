@@ -7,12 +7,36 @@ import (
 	"net/http"
 	"time"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 func getRepoReadme() {
 	fmt.Println("Running getRepoReadme function")
-	run()
+	// Database connection details
+	db := getStorage()
+
+	// Pagination parameters
+	page := 1
+	pageSize := 10
+	for {
+		offset := (page - 1) * pageSize
+		fmt.Printf("Reading repositories with pagination: page=%d, pageSize=%d, offset=%d\n", page, pageSize, offset)
+
+		// Read repositories with pagination
+		var repositories []Repository
+		if err := db.Limit(pageSize).Offset(offset).Find(&repositories).Error; err != nil {
+			log.Fatalf("failed to read repositories: %v", err)
+		}
+
+		if len(repositories) == 0 {
+			break
+		}
+
+		run(db, repositories)
+		page++
+	}
+
 	// db := getStorage()
 
 	// summary := RepositorySummary{
@@ -27,26 +51,13 @@ func getRepoReadme() {
 
 }
 
-func run() {
-	// Database connection details
-	db := getStorage()
+func run(db *gorm.DB, repositories []Repository) {
 
 	// Read all repositories from the repositories table
 	// var repositories []Repository
 	// if err := db.Find(&repositories).Error; err != nil {
 	// 	log.Fatalf("failed to read repositories: %v", err)
 	// }
-
-	// Pagination parameters
-	page := 1
-	pageSize := 10
-	offset := (page - 1) * pageSize
-
-	// Read repositories with pagination
-	var repositories []Repository
-	if err := db.Limit(pageSize).Offset(offset).Find(&repositories).Error; err != nil {
-		log.Fatalf("failed to read repositories: %v", err)
-	}
 
 	// Print the retrieved repositories
 	for _, repo := range repositories {
