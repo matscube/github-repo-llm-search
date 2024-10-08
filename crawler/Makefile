@@ -28,7 +28,7 @@ clean:
 
 backup:
 	pg_dump -h localhost -U exampleuser -d exampledb -F c -b -v -f exampledb.backup
-  pg_dump -h localhost -U exampleuser -d exampledb -F p -b -v -f exampledb.sql
+	pg_dump -h localhost -U exampleuser -d exampledb -F p -b -v -f exampledb.sql
 
 restore:
 	pg_restore -h localhost -U exampleuser -d exampledb -v exampledb.backup
