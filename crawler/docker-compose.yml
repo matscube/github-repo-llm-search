@@ -12,18 +12,18 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  db-test:
-    image: postgres:13
-    container_name: postgres-test
-    environment:
-      POSTGRES_USER: exampleuser2
-      POSTGRES_PASSWORD: examplepass2
-      POSTGRES_DB: exampledb2
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data_test:/var/lib/postgresql/data
+  # db-test:
+  #   image: postgres:13
+  #   container_name: postgres-test
+  #   environment:
+  #     POSTGRES_USER: exampleuser2
+  #     POSTGRES_PASSWORD: examplepass2
+  #     POSTGRES_DB: exampledb2
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - postgres_data_test:/var/lib/postgresql/data
 
 volumes:
   postgres_data:
-  postgres_data_test:
+  # postgres_data_test:

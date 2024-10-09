@@ -12,6 +12,7 @@ import (
 )
 
 func getRepoReadme() {
+
 	fmt.Println("Running getRepoReadme function")
 	// Database connection details
 	db := getStorage()
@@ -25,7 +26,7 @@ func getRepoReadme() {
 
 		// Read repositories with pagination
 		var repositories []Repository
-		if err := db.Limit(pageSize).Offset(offset).Find(&repositories).Error; err != nil {
+		if err := db.Order("id ASC").Limit(pageSize).Offset(offset).Find(&repositories).Error; err != nil {
 			log.Fatalf("failed to read repositories: %v", err)
 		}
 
@@ -63,16 +64,23 @@ func run(db *gorm.DB, repositories []Repository) {
 	for _, repo := range repositories {
 		fmt.Printf("ID: %d, Name: %s, FullName: %s\n", repo.ID, repo.Name, repo.FullName)
 
-		urls := getReadmeUrls(repo.FullName, repo.DefaultBranch)
-		readme, err := fetchReadmeText(urls[0])
-		if err != nil {
-			log.Printf("\tfailed to fetch README for %s %s: %v", repo.FullName, urls[0], err)
-			readme, err = fetchReadmeText(urls[1])
-			time.Sleep(2 * time.Second)
+		// Check if a RepositorySummary record already exists for this repository
+		var existingSummary RepositorySummary
+		if err := db.Where("repository_id = ?", repo.ID).First(&existingSummary).Error; err == nil {
+			fmt.Printf("\tRepositorySummary already exists for %s, skipping...\n", repo.FullName)
+			continue
 		}
+
+		notFoundList := readmeNotFoundRepos()
+		if contains(notFoundList, repo.FullName) {
+			fmt.Printf("\tREADME not found for %s, skipping...\n", repo.FullName)
+			continue
+		}
+
+		urls := getReadmeUrls(repo.FullName, repo.DefaultBranch)
+		readme, err := fetchReadmeTextThroughUrls(urls)
 		if err != nil {
-			log.Printf("\tfailed to fetch README for %s %s: %v", repo.FullName, urls[1], err)
-			time.Sleep(2 * time.Second)
+			fmt.Printf("\tfailed to fetch README for %s\n", fmt.Sprintf("https://github.com/%s", repo.FullName))
 			continue
 		}
 
@@ -93,7 +101,7 @@ func run(db *gorm.DB, repositories []Repository) {
 			Columns:   []clause.Column{{Name: "repository_id"}}, // Specify the conflict target
 			UpdateAll: true,
 		}).Create(&summary).Error; err != nil {
-			log.Printf("\tfailed to create new repository record for %s: %v", repo.FullName, err)
+			fmt.Printf("\tfailed to create new repository record for %s: %v\n", repo.FullName, err)
 		} else {
 			fmt.Printf("\tSuccessfully created new repository record for %s\n", repo.FullName)
 		}
@@ -103,11 +111,49 @@ func run(db *gorm.DB, repositories []Repository) {
 	}
 }
 
-func getReadmeUrls(fullName string, defaultBranch string) []string {
-	return []string{
-		fmt.Sprintf("https://raw.githubusercontent.com/%s/refs/heads/%s/README.md", fullName, defaultBranch),
-		fmt.Sprintf("https://raw.githubusercontent.com/%s/refs/heads/%s/README.markdown", fullName, defaultBranch),
+func fetchReadmeTextThroughUrls(urls []string) (string, error) {
+	for _, url := range urls {
+		readme, err := fetchReadmeText(url)
+		if err == nil {
+			return readme, nil
+		}
+		fmt.Printf("\t\tfailed to fetch README for %s: %v\n", url, err)
+		time.Sleep(1 * time.Second)
 	}
+	return "", fmt.Errorf("\t\tfailed to fetch README from all URLs\n")
+}
+
+func readmeNotFoundRepos() []string {
+	return []string{
+		"mig/gedit-themes",
+		"blynn/gitmagic",
+		"planetbeing/iphonelinux",
+		"luabind/luabind",
+	}
+}
+
+func getReadmeUrls(fullName string, defaultBranch string) []string {
+	baseUrl := fmt.Sprintf("https://raw.githubusercontent.com/%s/refs/heads/%s/", fullName, defaultBranch)
+	files := []string{
+		"README.md",
+		"readme.md",
+		"Readme.md",
+		"README.rst",
+		"README",
+		"readme",
+		"README.rdoc",
+		"README.textile",
+		"README.markdown",
+		"Readme.markdown",
+		"README.mkd",
+		"README.mkdn",
+		"readme.html",
+	}
+	var urls []string
+	for _, file := range files {
+		urls = append(urls, baseUrl+file)
+	}
+	return urls
 }
 
 func fetchReadmeText(url string) (string, error) {
@@ -119,7 +165,7 @@ func fetchReadmeText(url string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("\tfailed to fetch README: status code %d", resp.StatusCode)
+		return "", fmt.Errorf("\tfailed to fetch README: status code %d\n", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -128,4 +174,13 @@ func fetchReadmeText(url string) (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
